@@ -48,6 +48,7 @@
           packages = with pkgs; [
             cmake
             valgrind
+            man-pages
           ];
           shellHook = ''
             exec zsh

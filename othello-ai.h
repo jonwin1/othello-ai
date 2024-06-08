@@ -17,3 +17,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+#define WIDTH 8
+#define HEIGHT 8
+
+struct {
+  char board[HEIGHT][WIDTH];
+  int **boardWeights;
+  char player;
+  char opponent;
+} typedef state;
+
+struct {
+  int row;
+  int col;
+} typedef pos;
+
+void playerturn(void);
+void opponentturn(void);
+pos *getplayabletiles(state *s);
+state *newstate(void);
+void printboard(char board[HEIGHT][WIDTH]);
+void place(state *s, int row, int col);

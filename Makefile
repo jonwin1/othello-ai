@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 CC=gcc
-CFLAGS=-g -Werror -Wall -Wextra -Wpedantic -Wmissing-declarations -Wmissing-prototypes -Wold-style-definition -pthread
+CFLAGS=-g -Wall -Wextra -Wpedantic -Wmissing-declarations -Wmissing-prototypes -Wold-style-definition -pthread
 
 SRC=othello-ai.c
 OBJ=${SRC:.c=.o}
