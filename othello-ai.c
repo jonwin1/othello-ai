@@ -19,180 +19,334 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define WIDTH 8
-#define HEIGHT 8
-
-struct gamestate {
-  char board[HEIGHT][WIDTH];
-  int **boardWeights;
-  char player;
-  char opponent;
-};
+#define ROWS 8
+#define COLUMNS 8
 
 struct pos {
   int row;
   int col;
 };
 
-void playerturn(void);
-void opponentturn(void);
-struct pos *getplayabletiles(struct gamestate *s);
-struct gamestate *initgamestate(void);
-void printboard(char board[HEIGHT][WIDTH]);
-void place(struct gamestate *s, int row, int col);
+void playerturn(char board[ROWS][COLUMNS], char player);
+void botturn(char board[ROWS][COLUMNS]);
+void fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player);
+struct pos *getplayabletiles(char board[ROWS][COLUMNS], char player);
+void printboard(char board[ROWS][COLUMNS]);
 
 int
 main(void) {
-  int playrow, playcol;
-  struct gamestate *gs = initgamestate();
+  char board[ROWS][COLUMNS] = {{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', 'W', 'B', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', 'B', 'W', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+                              { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }};
+  int boardWeights[ROWS][COLUMNS] = {{ 20, -5, 5, 3, 3, 5,-5, 20 },
+                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
+                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
+                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
+                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
+                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
+                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
+                                    { 20, -5, 5, 3, 3, 5,-5, 20 }};
             
   while (true) {
-    struct pos *playable = getplayabletiles(gs);
-
-    int index = 0;
-    while (playable[index].row != -1) {
-      gs->board[playable[index].row][playable[index].col] = '*';
-      index++;
-    }
-
-    printboard(gs->board);
-
-    printf("\nEnter position to play (row,col): ");
-    // WARNING: Not safe reading
-    scanf("%d,%d", &playrow, &playcol);
-    gs->board[playrow][playcol] = 'W';
-
-    for (int r = 0; r < HEIGHT; r++) {
-      for (int c = 0; c < WIDTH; c++) {
-        if (gs->board[r][c] == '*') {
-         gs->board[r][c] = ' ';
-        }
-      }
-    }
+    playerturn(board, 'B');
+    playerturn(board, 'W');
   }
 
   return EXIT_SUCCESS;
 }
 
 void
-playerturn(void)
+playerturn(char board[ROWS][COLUMNS], char player)
 {
-};
+  int playrow, playcol, index;
+  struct pos *playable = getplayabletiles(board, player);
+
+  index = 0;
+  while (playable[index].row != -1) {
+    board[playable[index].row][playable[index].col] = '*';
+    index++;
+  }
+
+  printboard(board);
+
+  bool found = false;
+  while (!found) {
+    printf("\nEnter position to play (row,col): ");
+    // WARNING: Not safe reading
+    scanf("%d,%d", &playrow, &playcol);
+
+    index = 0;
+    while (playable[index].row != -1) {
+      if (playable[index].row == playrow && playable[index].col == playcol) {
+        found = true;
+        break;
+      }
+      index++;
+    }
+  }
+
+  board[playrow][playcol] = player;
+  struct pos playedtile = {playrow, playcol};
+  fliptiles(board, playedtile, player);
+
+  for (int r = 0; r < ROWS; r++) {
+    for (int c = 0; c < COLUMNS; c++) {
+      if (board[r][c] == '*') {
+       board[r][c] = ' ';
+      }
+    }
+  }
+
+}
 
 void 
-opponentturn(void)
+botturn(char board[ROWS][COLUMNS])
 {
 }
 
-struct pos *
-getplayabletiles(struct gamestate *gs)
+void
+fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
 {
-  struct pos *playable = calloc(HEIGHT*WIDTH-4+1, sizeof(struct pos));
+  char opponent;
+  if (player == 'B') {
+    opponent = 'W';
+  } else if (player == 'W') {
+    opponent = 'B';
+  } else {
+    fprintf(stderr, "Invalid player char: fliptiles");
+    exit(EXIT_FAILURE);
+  }
+
+ if (playedtile.row > 1 && board[playedtile.row-1][playedtile.col] == opponent) {
+    for (int i = playedtile.row-2; i >= 0; i--) {
+      if (board[i][playedtile.col] == ' ') {
+        break;
+      } else if (board[i][playedtile.col] == player) {
+        for (int j = playedtile.row-1; j > i; j--) {
+          board[j][playedtile.col] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.col > 1 && board[playedtile.row][playedtile.col-1] == opponent) {
+    for (int i = playedtile.col-2; i >= 0; i--) {
+      if (board[playedtile.row][i] == ' ') {
+        break;
+      } else if (board[playedtile.row][i] == player) {
+        for (int j = playedtile.col-1; j > i; j--) {
+          board[playedtile.row][j] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.row < 6 && board[playedtile.row+1][playedtile.col] == opponent) {
+    for (int i = playedtile.row+2; i <= 7; i++) {
+      if (board[i][playedtile.col] == ' ') {
+        break;
+      } else if (board[i][playedtile.col] == player) {
+        for (int j = playedtile.row+1; j < i; j++) {
+          board[j][playedtile.col] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.col < 6 && board[playedtile.row][playedtile.col+1] == opponent) {
+    for (int i = playedtile.col+2; i <= 7; i++) {
+      if (board[playedtile.row][i] == ' ') {
+        break;
+      } else if (board[playedtile.row][i] == player) {
+        for (int j = playedtile.col+1; j < i; j++) {
+          board[playedtile.row][j] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.row > 1 && playedtile.col > 1 && board[playedtile.row-1][playedtile.col-1] == opponent) {
+    for (int r = playedtile.row-2, c = playedtile.col-2; r >= 0 && c >= 0; r--, c--) {
+      if (board[r][c] == ' ') {
+        break;
+      } else if (board[r][c] == player) {
+        for (int i = playedtile.row-1, j = playedtile.col-1; i > r && j > c; i--, j--) {
+          board[i][j] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.row > 1 && playedtile.col < 6 && board[playedtile.row-1][playedtile.col+1] == opponent) {
+    for (int r = playedtile.row-2, c = playedtile.col+2; r >= 0 && c <= 7; r--, c++) {
+      if (board[r][c] == ' ') {
+        break;
+      } else if (board[r][c] == player) {
+        for (int i = playedtile.row-1, j = playedtile.col+1; i > r && j < c; i--, j++) {
+          board[i][j] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.row < 6 && playedtile.col > 1 && board[playedtile.row+1][playedtile.col-1] == opponent) {
+    for (int r = playedtile.row+2, c = playedtile.col-2; r <= 7 && c >= 0; r++, c--) {
+      if (board[r][c] == ' ') {
+        break;
+      } else if (board[r][c] == player) {
+        for (int i = playedtile.row+1, j = playedtile.col-1; i < r && j > c; i++, j--) {
+          board[i][j] = player;
+        }
+        break;
+      }
+    }
+  }
+
+  if (playedtile.row < 6 && playedtile.col < 6 && board[playedtile.row+1][playedtile.col+1] == opponent) {
+    for (int r = playedtile.row+2, c = playedtile.col+2; r <= 7 && c <= 7; r++, c++) {
+      if (board[r][c] == ' ') {
+        break;
+      } else if (board[r][c] == player) {
+        for (int i = playedtile.row+1, j = playedtile.col+1; i < r && j < c; i++, j++) {
+          board[i][j] = player;
+        }
+        break;
+      }
+    }
+  }
+}
+
+// OPTIMIZE: adds duplicates
+struct pos *
+getplayabletiles(char board[ROWS][COLUMNS], char player)
+{
+  struct pos *playable = calloc(ROWS*COLUMNS-4+1, sizeof(struct pos));
   int index = 0;
 
-  for (int row = 0; row < HEIGHT; row++) {
-    for (int col = 0; col < WIDTH; col++) {
-      if (gs->board[row][col] == gs->player) {
+  char opponent;
+  if (player == 'B') {
+    opponent = 'W';
+  } else if (player == 'W') {
+    opponent = 'B';
+  } else {
+    fprintf(stderr, "Invalid player char: getplayabletiles");
+    exit(EXIT_FAILURE);
+  }
 
-        if (row > 1 && gs->board[row-1][col] == gs->opponent) {
+  for (int row = 0; row < ROWS; row++) {
+    for (int col = 0; col < COLUMNS; col++) {
+      if (board[row][col] == player) {
+
+        if (row > 1 && board[row-1][col] == opponent) {
           for (int i = row-2; i >= 0; i--) {
-            if (gs->board[i][col] == ' ') {
+            if (board[i][col] == ' ') {
               playable[index].row = i;
               playable[index].col = col;
               index++;
               break;
-            } else if (gs->board[i][col] == gs->player) {
+            } else if (board[i][col] == player) {
               break;
             }
           }
         }
 
-        if (col > 1 && gs->board[row][col-1] == gs->opponent) {
+        if (col > 1 && board[row][col-1] == opponent) {
           for (int i = col-2; i >= 0; i--) {
-            if (gs->board[row][i] == ' ') {
+            if (board[row][i] == ' ') {
               playable[index].row = row;
               playable[index].col = i;
               index++;
               break;
-            } else if (gs->board[row][i] == gs->player) {
+            } else if (board[row][i] == player) {
               break;
             }
           }
         }
 
-        if (row < 6 && gs->board[row+1][col] == gs->opponent) {
+        if (row < 6 && board[row+1][col] == opponent) {
           for (int i = row+2; i <= 7; i++) {
-            if (gs->board[i][col] == ' ') {
+            if (board[i][col] == ' ') {
               playable[index].row = i;
               playable[index].col = col;
               index++;
               break;
-            } else if (gs->board[i][col] == gs->player) {
+            } else if (board[i][col] == player) {
               break;
             }
           }
         }
 
-        if (col < 6 && gs->board[row][col+1] == gs->opponent) {
+        if (col < 6 && board[row][col+1] == opponent) {
           for (int i = col+2; i <= 7; i++) {
-            if (gs->board[row][i] == ' ') {
+            if (board[row][i] == ' ') {
               playable[index].row = row;
               playable[index].col = i;
               index++;
               break;
-            } else if (gs->board[row][i] == gs->player) {
+            } else if (board[row][i] == player) {
               break;
             }
           }
         }
 
-        if (row > 1 && col > 1 && gs->board[row-1][col-1] == gs->opponent) {
+        if (row > 1 && col > 1 && board[row-1][col-1] == opponent) {
           for (int r = row-2, c = col-2; r >= 0 && c >= 0; r--, c--) {
-            if (gs->board[r][c] == ' ') {
+            if (board[r][c] == ' ') {
               playable[index].row = r;
               playable[index].col = c;
               index++;
               break;
-            } else if (gs->board[r][c] == gs->player) {
+            } else if (board[r][c] == player) {
               break;
             }
           }
         }
 
-        if (row > 1 && col < 6 && gs->board[row-1][col+1] == gs->opponent) {
-          for (int r = row-2, c = col+2; r >= 0 && c <= 0; r--, c++) {
-            if (gs->board[r][c] == ' ') {
+        if (row > 1 && col < 6 && board[row-1][col+1] == opponent) {
+          for (int r = row-2, c = col+2; r >= 0 && c <= 7; r--, c++) {
+            if (board[r][c] == ' ') {
               playable[index].row = r;
               playable[index].col = c;
               index++;
               break;
-            } else if (gs->board[r][c] == gs->player) {
+            } else if (board[r][c] == player) {
               break;
             }
           }
         }
 
-        if (row < 6 && col > 1 && gs->board[row+1][col-1] == gs->opponent) {
-          for (int r = row+2, c = col-2; r <= 0 && c >= 0; r++, c--) {
-            if (gs->board[r][c] == ' ') {
+        if (row < 6 && col > 1 && board[row+1][col-1] == opponent) {
+          for (int r = row+2, c = col-2; r <= 7 && c >= 0; r++, c--) {
+            if (board[r][c] == ' ') {
               playable[index].row = r;
               playable[index].col = c;
               index++;
               break;
-            } else if (gs->board[r][c] == gs->player) {
+            } else if (board[r][c] == player) {
               break;
             }
           }
         }
 
-        if (row < 6 && col < 6 && gs->board[row+1][col+1] == gs->opponent) {
-          for (int r = row+2, c = col+2; r <= 0 && c <= 0; r++, c++) {
-            if (gs->board[r][c] == ' ') {
+        if (row < 6 && col < 6 && board[row+1][col+1] == opponent) {
+          for (int r = row+2, c = col+2; r <= 7 && c <= 7; r++, c++) {
+            if (board[r][c] == ' ') {
               playable[index].row = r;
               playable[index].col = c;
               index++;
               break;
-            } else if (gs->board[r][c] == gs->player) {
+            } else if (board[r][c] == player) {
               break;
             }
           }
@@ -207,52 +361,17 @@ getplayabletiles(struct gamestate *gs)
   return playable;
 }
 
-struct gamestate *
-initgamestate(void)
-{
-  struct gamestate *gs = malloc(sizeof(struct gamestate));
-  for (int row = 0; row < HEIGHT; row++) {
-    for (int col = 0; col < WIDTH; col++) {
-      gs->board[row][col] = ' ';
-    }
-  }
-  gs->board[3][4] = 'B';
-  gs->board[4][3] = 'B';
-  gs->board[3][3] = 'W';
-  gs->board[4][4] = 'W';
-  gs->player = 'W';
-  gs->opponent = 'B';
-  int boardWeights[HEIGHT][WIDTH] = {{ 20, -5, 5, 3, 3, 5,-5, 20 },
-                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
-                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
-                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
-                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
-                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
-                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
-                                    { 20, -5, 5, 3, 3, 5,-5, 20 }};
-  gs->boardWeights = (int **)boardWeights;
-  return gs;
-}
-
 void
-printboard(char board[HEIGHT][WIDTH])
+printboard(char board[ROWS][COLUMNS])
 {
   printf("    0   1   2   3   4   5   6   7\n");
-  for (int row = 0; row < HEIGHT; row++) {
+  for (int row = 0; row < ROWS; row++) {
     printf("  ---------------------------------\n");
     printf("%d ", row);
-    for (int col = 0; col < WIDTH; col++) {
+    for (int col = 0; col < COLUMNS; col++) {
        printf("| %c ", board[row][col]);
     }
     printf("|\n");
   }
   printf("  ---------------------------------\n");
-}
-
-void
-place(struct gamestate *gs, int row, int col) {
-  if (gs->player == 'W') {
-  } else if ( gs->player == 'B') {
-    gs->board[row][col] = '*';
-  }
 }
