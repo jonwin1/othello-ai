@@ -15,187 +15,213 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "othello-ai.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define WIDTH 8
+#define HEIGHT 8
+
+struct gamestate {
+  char board[HEIGHT][WIDTH];
+  int **boardWeights;
+  char player;
+  char opponent;
+};
+
+struct pos {
+  int row;
+  int col;
+};
+
+void playerturn(void);
+void opponentturn(void);
+struct pos *getplayabletiles(struct gamestate *s);
+struct gamestate *initgamestate(void);
+void printboard(char board[HEIGHT][WIDTH]);
+void place(struct gamestate *s, int row, int col);
 
 int
 main(void) {
   int playrow, playcol;
-  state *s = newstate();
+  struct gamestate *gs = initgamestate();
             
   while (true) {
-    printboard(s->board);
-
-    char buf[1];
-
-    pos *playable = getplayabletiles(s);
+    struct pos *playable = getplayabletiles(gs);
 
     int index = 0;
     while (playable[index].row != -1) {
-      s->board[playable[index].row][playable[index].col] = '*';
+      gs->board[playable[index].row][playable[index].col] = '*';
       index++;
     }
 
-    printboard(s->board);
+    printboard(gs->board);
 
     printf("\nEnter position to play (row,col): ");
-    // Not safe reading
+    // WARNING: Not safe reading
     scanf("%d,%d", &playrow, &playcol);
-    s->board[playrow][playcol] = 'W';
+    gs->board[playrow][playcol] = 'W';
+
+    for (int r = 0; r < HEIGHT; r++) {
+      for (int c = 0; c < WIDTH; c++) {
+        if (gs->board[r][c] == '*') {
+         gs->board[r][c] = ' ';
+        }
+      }
+    }
   }
 
   return EXIT_SUCCESS;
 }
 
 void
-playerturn(void) {
+playerturn(void)
+{
 };
 
 void 
-opponentturn(void) {
+opponentturn(void)
+{
 }
 
-pos *
-getplayabletiles(state *s)
+struct pos *
+getplayabletiles(struct gamestate *gs)
 {
-  pos *playable = calloc(HEIGHT*WIDTH+1, sizeof(pos));
+  struct pos *playable = calloc(HEIGHT*WIDTH-4+1, sizeof(struct pos));
   int index = 0;
 
   for (int row = 0; row < HEIGHT; row++) {
     for (int col = 0; col < WIDTH; col++) {
-      if (col < 7) {
-        if (s->board[row][col+1] == s->opponent) {
-          for (int i = col+1; i <= 7; i++) {
-            if (s->board[row][i] == ' ') {
-              break;
-            } else if (s->board[row][i] == s->player) {
-              playable[index].row = row;
+      if (gs->board[row][col] == gs->player) {
+
+        if (row > 1 && gs->board[row-1][col] == gs->opponent) {
+          for (int i = row-2; i >= 0; i--) {
+            if (gs->board[i][col] == ' ') {
+              playable[index].row = i;
               playable[index].col = col;
               index++;
+              break;
+            } else if (gs->board[i][col] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (col > 0) {
-        if (s->board[row][col-1] == s->opponent) {
-          for (int i = col-1; i >= 0; i--) {
-            if (s->board[row][i] == ' ') {
-              break;
-            } else if (s->board[row][i] == s->player) {
+
+        if (col > 1 && gs->board[row][col-1] == gs->opponent) {
+          for (int i = col-2; i >= 0; i--) {
+            if (gs->board[row][i] == ' ') {
               playable[index].row = row;
-              playable[index].col = col;
+              playable[index].col = i;
               index++;
+              break;
+            } else if (gs->board[row][i] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row < 7) {
-        if (s->board[row+1][col] == s->opponent) {
-          for (int i = row+1; i <= 7; i++) {
-            if (s->board[i][col] == ' ') {
-              break;
-            } else if (s->board[i][col] == s->player) {
-              playable[index].row = row;
+
+        if (row < 6 && gs->board[row+1][col] == gs->opponent) {
+          for (int i = row+2; i <= 7; i++) {
+            if (gs->board[i][col] == ' ') {
+              playable[index].row = i;
               playable[index].col = col;
               index++;
+              break;
+            } else if (gs->board[i][col] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row > 0) {
-        if (s->board[row-1][col] == s->opponent) {
-          for (int i = row-1; i >= 0; i--) {
-            if (s->board[i][col] == ' ') {
-              break;
-            } else if (s->board[i][col] == s->player) {
+
+        if (col < 6 && gs->board[row][col+1] == gs->opponent) {
+          for (int i = col+2; i <= 7; i++) {
+            if (gs->board[row][i] == ' ') {
               playable[index].row = row;
-              playable[index].col = col;
+              playable[index].col = i;
               index++;
+              break;
+            } else if (gs->board[row][i] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row < 7 && col < 7) {
-        if (s->board[row+1][col+1] == s->opponent) {
-          for (int r = row+1, c = col+1; r <= 7 && c <= 7; r++, c++) {
-            if (s->board[r][c] == ' ') {
-              break;
-            } else if (s->board[r][c] == s->player) {
-              playable[index].row = row;
-              playable[index].col = col;
+
+        if (row > 1 && col > 1 && gs->board[row-1][col-1] == gs->opponent) {
+          for (int r = row-2, c = col-2; r >= 0 && c >= 0; r--, c--) {
+            if (gs->board[r][c] == ' ') {
+              playable[index].row = r;
+              playable[index].col = c;
               index++;
+              break;
+            } else if (gs->board[r][c] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row < 7 && col > 0) {
-        if (s->board[row+1][col-1] == s->opponent) {
-          for (int r = row+1, c = col-1; r <= 7 && c >= 0; r++, c--) {
-            if (s->board[r][c] == ' ') {
-              break;
-            } else if (s->board[r][c] == s->player) {
-              playable[index].row = row;
-              playable[index].col = col;
+
+        if (row > 1 && col < 6 && gs->board[row-1][col+1] == gs->opponent) {
+          for (int r = row-2, c = col+2; r >= 0 && c <= 0; r--, c++) {
+            if (gs->board[r][c] == ' ') {
+              playable[index].row = r;
+              playable[index].col = c;
               index++;
+              break;
+            } else if (gs->board[r][c] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row > 0 && col < 7) {
-        if (s->board[row-1][col+1] == s->opponent) {
-          for (int r = row-1, c = col+1; r >= 0 && c <= 7; r--, c++) {
-            if (s->board[r][c] == ' ') {
-              break;
-            } else if (s->board[r][c] == s->player) {
-              playable[index].row = row;
-              playable[index].col = col;
+
+        if (row < 6 && col > 1 && gs->board[row+1][col-1] == gs->opponent) {
+          for (int r = row+2, c = col-2; r <= 0 && c >= 0; r++, c--) {
+            if (gs->board[r][c] == ' ') {
+              playable[index].row = r;
+              playable[index].col = c;
               index++;
+              break;
+            } else if (gs->board[r][c] == gs->player) {
               break;
             }
           }
         }
-      }
-      if (row > 0 && col > 0) {
-        if (s->board[row-1][col-1] == s->opponent) {
-          for (int r = row-1, c = col-1; r >= 0 && c >= 0; r--, c--) {
-            if (s->board[r][c] == ' ') {
-              break;
-            } else if (s->board[r][c] == s->player) {
-              playable[index].row = row;
-              playable[index].col = col;
+
+        if (row < 6 && col < 6 && gs->board[row+1][col+1] == gs->opponent) {
+          for (int r = row+2, c = col+2; r <= 0 && c <= 0; r++, c++) {
+            if (gs->board[r][c] == ' ') {
+              playable[index].row = r;
+              playable[index].col = c;
               index++;
+              break;
+            } else if (gs->board[r][c] == gs->player) {
               break;
             }
           }
         }
+
       }
     }
   }
+
   playable[index].row = -1;
   playable[index].col = -1;
   return playable;
 }
 
-state *
-newstate(void)
+struct gamestate *
+initgamestate(void)
 {
-  state *s = malloc(sizeof(state));
+  struct gamestate *gs = malloc(sizeof(struct gamestate));
   for (int row = 0; row < HEIGHT; row++) {
     for (int col = 0; col < WIDTH; col++) {
-      s->board[row][col] = ' ';
+      gs->board[row][col] = ' ';
     }
   }
-  s->board[3][4] = 'B';
-  s->board[4][3] = 'B';
-  s->board[3][3] = 'W';
-  s->board[4][4] = 'W';
-  s->player = 'W';
-  s->opponent = 'B';
+  gs->board[3][4] = 'B';
+  gs->board[4][3] = 'B';
+  gs->board[3][3] = 'W';
+  gs->board[4][4] = 'W';
+  gs->player = 'W';
+  gs->opponent = 'B';
   int boardWeights[HEIGHT][WIDTH] = {{ 20, -5, 5, 3, 3, 5,-5, 20 },
                                     { -5,-10, 1, 2, 2, 1,-3, -5 },
                                     {  5,  1, 3, 2, 2, 3, 1,  5 },
@@ -204,8 +230,8 @@ newstate(void)
                                     {  5,  1, 3, 2, 2, 3, 1,  5 },
                                     { -5,-10, 1, 2, 2, 1,-3, -5 },
                                     { 20, -5, 5, 3, 3, 5,-5, 20 }};
-  s->boardWeights = (int **)boardWeights;
-  return s;
+  gs->boardWeights = (int **)boardWeights;
+  return gs;
 }
 
 void
@@ -224,9 +250,9 @@ printboard(char board[HEIGHT][WIDTH])
 }
 
 void
-place(state *s, int row, int col) {
-  if (s->player == 'W') {
-  } else if ( s->player == 'B') {
-    s->board[row][col] = '*';
+place(struct gamestate *gs, int row, int col) {
+  if (gs->player == 'W') {
+  } else if ( gs->player == 'B') {
+    gs->board[row][col] = '*';
   }
 }
