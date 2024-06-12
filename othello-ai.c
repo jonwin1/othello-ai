@@ -18,9 +18,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <memory.h>
 
 #define ROWS 8
 #define COLUMNS 8
+#define MAXDEPTH 200
 
 struct pos {
   int row;
@@ -39,6 +41,22 @@ int playerturn(char board[ROWS][COLUMNS], char player);
  * @return        Number of tiles fliped or -1 if no possible moves
  */
 int botturn(char board[ROWS][COLUMNS], char player);
+/* Find the best move for the player
+ * @param board   The game board
+ * @param player  Who is playing ('B' or 'W')
+ * @return        The move to make
+ */
+struct pos findbestmove(char board[ROWS][COLUMNS], char player);
+/*
+ *
+ */
+int 
+minimax(char board[ROWS][COLUMNS], int depth, bool ismax, char player,
+        int alpha, int beta);
+/*
+ */
+int
+evaluate(char board[ROWS][COLUMNS], char player);
 /* Flip tiles after placing a tile
  * @param board       The game board
  * @param playedtile  The position of the tile that has been placed
@@ -79,8 +97,11 @@ main(void) {
                                     { 20, -5, 5, 3, 3, 5,-5, 20 }};
             
   while (true) {
-    flipedtiles = playerturn(board, 'B');
-    if (flipedtiles == -1) {
+    flipedtiles = botturn(board, 'B');
+    if (flipedtiles == 0) {
+      fprintf(stderr, "Error: Invalid move placed\n");
+      return EXIT_FAILURE;
+    } else if (flipedtiles == -1) {
       if (gameover == true) {
         break;
       }
@@ -92,8 +113,11 @@ main(void) {
     }
     printf("Score: %d / %d\n", blacktiles, whitetiles);
 
-    flipedtiles = playerturn(board, 'W');
-    if (flipedtiles == -1) {
+    flipedtiles = botturn(board, 'W');
+    if (flipedtiles == 0) {
+      fprintf(stderr, "Error: Invalid move placed\n");
+      return EXIT_FAILURE;
+    } else if (flipedtiles == -1) {
       if (gameover == true) {
         break;
       }
@@ -170,7 +194,209 @@ playerturn(char board[ROWS][COLUMNS], char player)
 int 
 botturn(char board[ROWS][COLUMNS], char player)
 {
-  return 0;
+  struct pos bestmove;
+
+  printboard(board);
+  printf("Player %c, thinking...\n", player);
+
+  bestmove = findbestmove(board, player);
+
+  if (bestmove.row == -1)
+    return -1;
+
+  board[bestmove.row][bestmove.col] = player;
+
+  return fliptiles(board, bestmove, player);
+}
+
+struct pos
+findbestmove(char board[ROWS][COLUMNS], char player)
+{
+  int index, bestval = -10000, moveval;
+  char opponent;
+  char tempboard[ROWS][COLUMNS];
+  struct pos bestmove = {-1,-1};
+
+  if (player == 'B') {
+    opponent = 'W';
+  } else if (player == 'W') {
+    opponent = 'B';
+  } else {
+    fprintf(stderr, "Invalid player char: fliptiles");
+    exit(EXIT_FAILURE);
+  }
+
+  struct pos *playable = getplayabletiles(board, player);
+  if (playable[0].row == -1) {
+    printf("No possible moves, next player\n");
+    return bestmove;
+  }
+
+  index = 0;
+  while (playable[index].row != -1) {
+    memcpy(tempboard, board, sizeof(tempboard));
+
+    tempboard[playable[index].row][playable[index].col] = player;
+    struct pos playedtile = {playable[index].row, playable[index].col};
+    fliptiles(tempboard, playedtile, player);
+
+    moveval = minimax(tempboard, 0, false, player, -1000, 1000);
+    
+    if (moveval > bestval) {
+      bestmove.row = playedtile.row;
+      bestmove.col = playedtile.col;
+      bestval = moveval;
+    }
+    
+    index++;
+  }
+
+  return bestmove;
+}
+
+int 
+minimax(char board[ROWS][COLUMNS], int depth, bool ismax, char player,
+        int alpha, int beta)
+{
+  fprintf(stderr, "minimax at depth %d\n", depth);
+  int index, best, val;
+  int score = evaluate(board, player);
+  char opponent;
+  char tempboard[ROWS][COLUMNS];
+
+  if (score == 100) {
+    return 100 - depth;
+  }
+
+  if (score == -100) {
+    return -100;
+  }
+
+  if (score == -1) {
+    return 0;
+  }
+
+  if (depth >= MAXDEPTH) {
+    // NOTE: Do somethin here
+    int count = 0;
+    for (int r = 0; r < ROWS; r++) {
+      for (int c = 0; c < COLUMNS; c++) {
+        if (board[r][c] == player) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  if (player == 'B') {
+    opponent = 'W';
+  } else if (player == 'W') {
+    opponent = 'B';
+  } else {
+    fprintf(stderr, "Invalid player char: fliptiles");
+    exit(EXIT_FAILURE);
+  }
+
+  if (ismax) {
+    int best = -1000;
+
+    struct pos *playable = getplayabletiles(board, player);
+    if (playable[0].row == -1) {
+      printf("No possible moves, next player\n");
+      return best;
+    }
+
+    index = 0;
+    while (playable[index].row != -1) {
+      memcpy(tempboard, board, sizeof(tempboard));
+
+      tempboard[playable[index].row][playable[index].col] = player;
+      struct pos playedtile = {playable[index].row, playable[index].col};
+      fliptiles(tempboard, playedtile, player);
+
+      val = minimax(tempboard, ++depth, !ismax, opponent, alpha, beta);
+      
+      if (val > best) {
+        best = val;
+      }
+      if (best > alpha) {
+        alpha = best;
+      }
+      if (beta <= alpha) {
+        break;
+      }
+      
+      index++;
+    }
+    return best;
+  } else {
+    int best = 1000;
+
+    struct pos *playable = getplayabletiles(board, player);
+    if (playable[0].row == -1) {
+      printf("No possible moves, next player\n");
+      return best;
+    }
+
+    index = 0;
+    while (playable[index].row != -1) {
+      memcpy(tempboard, board, sizeof(tempboard));
+
+      tempboard[playable[index].row][playable[index].col] = player;
+      struct pos playedtile = {playable[index].row, playable[index].col};
+      fliptiles(tempboard, playedtile, player);
+
+      val = minimax(tempboard, ++depth, !ismax, opponent, alpha, beta);
+      
+      if (val > best)
+        best = val;
+      if (best > beta)
+        beta = best;
+      if (beta <= alpha)
+        break;
+      
+      index++;
+    }
+    return best;
+  }
+}
+
+int
+evaluate(char board[ROWS][COLUMNS], char player)
+{
+  int blacktiles = 0, whitetiles = 0;
+  if (getplayabletiles(board, 'B')[0].row == -1 &&
+      getplayabletiles(board, 'W')[0].row == -1) {
+    return -1; // gameover
+  } else {
+    for (int r = 0; r < ROWS; r++) {
+      for (int c = 0; c < COLUMNS; c++) {
+        if (board[r][c] == 'B') {
+          blacktiles++;
+        } else if (board[r][c] == 'W') {
+          whitetiles++;
+        }
+      }
+    }
+    if (player == 'B') {
+      if (blacktiles > whitetiles) {
+        return(100);
+      } else if (blacktiles < whitetiles) {
+        return(-100);
+      } else {
+        return(0);
+      }
+    } else {
+      if (blacktiles > whitetiles) {
+        return(-100);
+      } else if (blacktiles < whitetiles) {
+        return(00);
+      } else {
+        return(0);
+      }
+    }
+  }
 }
 
 int
