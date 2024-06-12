@@ -27,14 +27,40 @@ struct pos {
   int col;
 };
 
-void playerturn(char board[ROWS][COLUMNS], char player);
-void botturn(char board[ROWS][COLUMNS]);
-void fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player);
+/*
+ * @param board   The game board
+ * @param player  Who is playing ('B' or 'W')
+ * @return        Number of tiles fliped or -1 if no possible moves
+ */
+int playerturn(char board[ROWS][COLUMNS], char player);
+/* 
+ * @param board   The game board
+ * @param player  Who is playing ('B' or 'W')
+ * @return        Number of tiles fliped or -1 if no possible moves
+ */
+int botturn(char board[ROWS][COLUMNS], char player);
+/* Flip tiles after placing a tile
+ * @param board       The game board
+ * @param playedtile  The position of the tile that has been placed
+ * @param player      Who is playing ('B' or 'W')
+ * @return            Number of tiles fliped
+ */
+int fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player);
+/* Get playable tiles
+ * @param board     The game board
+ * @param player    Who is playing ('B' or 'W')
+ * @return          Array of playable positions terminated with (-1, -1)
+ */
 struct pos *getplayabletiles(char board[ROWS][COLUMNS], char player);
+/* Print the board
+ * @param board   The game board
+ */
 void printboard(char board[ROWS][COLUMNS]);
 
 int
 main(void) {
+  int blacktiles = 2, whitetiles = 2, flipedtiles;
+  bool gameover = false;
   char board[ROWS][COLUMNS] = {{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
@@ -53,18 +79,53 @@ main(void) {
                                     { 20, -5, 5, 3, 3, 5,-5, 20 }};
             
   while (true) {
-    playerturn(board, 'B');
-    playerturn(board, 'W');
+    flipedtiles = playerturn(board, 'B');
+    if (flipedtiles == -1) {
+      if (gameover == true) {
+        break;
+      }
+      gameover = true;
+    } else {
+      blacktiles += flipedtiles + 1;
+      whitetiles -= flipedtiles;
+      gameover = false;
+    }
+    printf("Score: %d / %d\n", blacktiles, whitetiles);
+
+    flipedtiles = playerturn(board, 'W');
+    if (flipedtiles == -1) {
+      if (gameover == true) {
+        break;
+      }
+      gameover = true;
+    } else {
+      whitetiles += flipedtiles + 1;
+      blacktiles -= flipedtiles;
+      gameover = false;
+    }
+    printf("Score: %d / %d\n", blacktiles, whitetiles);
+  }
+
+  if (blacktiles > whitetiles) {
+    printf("B Won\n");
+  } else if (whitetiles > blacktiles) {
+    printf("W Won\n");
+  } else {
+    printf("Draw\n");
   }
 
   return EXIT_SUCCESS;
 }
 
-void
+int
 playerturn(char board[ROWS][COLUMNS], char player)
 {
   int playrow, playcol, index;
   struct pos *playable = getplayabletiles(board, player);
+  if (playable[0].row == -1) {
+    printf("No possible moves, next player\n");
+    return -1;
+  }
 
   index = 0;
   while (playable[index].row != -1) {
@@ -76,9 +137,11 @@ playerturn(char board[ROWS][COLUMNS], char player)
 
   bool found = false;
   while (!found) {
-    printf("\nEnter position to play (row,col): ");
+    printf("Player %c\n", player);
+    printf("Enter position to play (row,col): ");
     // WARNING: Not safe reading
     scanf("%d,%d", &playrow, &playcol);
+    printf("\n");
 
     index = 0;
     while (playable[index].row != -1) {
@@ -92,7 +155,6 @@ playerturn(char board[ROWS][COLUMNS], char player)
 
   board[playrow][playcol] = player;
   struct pos playedtile = {playrow, playcol};
-  fliptiles(board, playedtile, player);
 
   for (int r = 0; r < ROWS; r++) {
     for (int c = 0; c < COLUMNS; c++) {
@@ -102,17 +164,21 @@ playerturn(char board[ROWS][COLUMNS], char player)
     }
   }
 
+  return fliptiles(board, playedtile, player);
 }
 
-void 
-botturn(char board[ROWS][COLUMNS])
+int 
+botturn(char board[ROWS][COLUMNS], char player)
 {
+  return 0;
 }
 
-void
+int
 fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
 {
+  int flipedtiles = 0;
   char opponent;
+
   if (player == 'B') {
     opponent = 'W';
   } else if (player == 'W') {
@@ -129,6 +195,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[i][playedtile.col] == player) {
         for (int j = playedtile.row-1; j > i; j--) {
           board[j][playedtile.col] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -142,6 +209,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[playedtile.row][i] == player) {
         for (int j = playedtile.col-1; j > i; j--) {
           board[playedtile.row][j] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -155,6 +223,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[i][playedtile.col] == player) {
         for (int j = playedtile.row+1; j < i; j++) {
           board[j][playedtile.col] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -168,6 +237,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[playedtile.row][i] == player) {
         for (int j = playedtile.col+1; j < i; j++) {
           board[playedtile.row][j] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -181,6 +251,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[r][c] == player) {
         for (int i = playedtile.row-1, j = playedtile.col-1; i > r && j > c; i--, j--) {
           board[i][j] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -194,6 +265,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[r][c] == player) {
         for (int i = playedtile.row-1, j = playedtile.col+1; i > r && j < c; i--, j++) {
           board[i][j] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -207,6 +279,7 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[r][c] == player) {
         for (int i = playedtile.row+1, j = playedtile.col-1; i < r && j > c; i++, j--) {
           board[i][j] = player;
+          flipedtiles++;
         }
         break;
       }
@@ -220,11 +293,14 @@ fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player)
       } else if (board[r][c] == player) {
         for (int i = playedtile.row+1, j = playedtile.col+1; i < r && j < c; i++, j++) {
           board[i][j] = player;
+          flipedtiles++;
         }
         break;
       }
     }
   }
+
+  return flipedtiles;
 }
 
 // OPTIMIZE: adds duplicates
