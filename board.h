@@ -17,22 +17,31 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <memory.h>
-#include "minimax.h"
-#include "board.h"
 
-/*
- * @param board   The game board
- * @param player  Who is playing ('B' or 'W')
- * @return        Number of tiles fliped or -1 if no possible moves
+#define ROWS 8
+#define COLUMNS 8
+
+struct pos {
+  int row;
+  int col;
+};
+
+/* Flip tiles after placing a tile
+ * @param board       The game board
+ * @param playedtile  The position of the tile that has been placed
+ * @param player      Who is playing ('B' or 'W')
+ * @return            Number of tiles fliped
  */
-int playerturn(char board[ROWS][COLUMNS], char player);
+int fliptiles(char board[ROWS][COLUMNS], struct pos playedtile, char player);
 
-/* 
- * @param board   The game board
- * @param player  Who is playing ('B' or 'W')
- * @return        Number of tiles fliped or -1 if no possible moves
+/* Get playable tiles
+ * @param board     The game board
+ * @param player    Who is playing ('B' or 'W')
+ * @return          Array of playable positions terminated with (-1, -1)
  */
-int botturn(char board[ROWS][COLUMNS], char player);
+struct pos *getplayabletiles(char board[ROWS][COLUMNS], char player);
 
+/* Print the board
+ * @param board   The game board
+ */
+void printboard(char board[ROWS][COLUMNS]);

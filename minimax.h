@@ -19,20 +19,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <memory.h>
-#include "minimax.h"
 #include "board.h"
 
+#define MAXDEPTH 20
+
+/* Find the best move for the player
+ * @param board   The game board
+ * @param player  Who is playing ('B' or 'W')
+ * @return        The move to make
+ */
+struct pos findbestmove(char board[ROWS][COLUMNS], char player);
+
 /*
- * @param board   The game board
- * @param player  Who is playing ('B' or 'W')
- * @return        Number of tiles fliped or -1 if no possible moves
+ *
  */
-int playerturn(char board[ROWS][COLUMNS], char player);
+int minimax(char board[ROWS][COLUMNS], int depth, bool ismax, char player,
+        int alpha, int beta);
 
-/* 
- * @param board   The game board
- * @param player  Who is playing ('B' or 'W')
- * @return        Number of tiles fliped or -1 if no possible moves
+/*
  */
-int botturn(char board[ROWS][COLUMNS], char player);
-
+int evaluate(char board[ROWS][COLUMNS], char player);
