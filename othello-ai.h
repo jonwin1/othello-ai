@@ -20,7 +20,6 @@
 #include <stdbool.h>
 #include <memory.h>
 #include "minimax.h"
-#include "board.h"
 
 /*
  * @param board   The game board

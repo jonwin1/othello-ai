@@ -21,18 +21,8 @@ struct pos
 findbestmove(char board[ROWS][COLUMNS], char player)
 {
   int index, bestval = -10000, moveval;
-  char opponent;
   char tempboard[ROWS][COLUMNS];
   struct pos bestmove = {-1,-1};
-
-  if (player == 'B') {
-    opponent = 'W';
-  } else if (player == 'W') {
-    opponent = 'B';
-  } else {
-    fprintf(stderr, "Invalid player char: fliptiles");
-    exit(EXIT_FAILURE);
-  }
 
   struct pos *playable = getplayabletiles(board, player);
   if (playable[0].row == -1) {
@@ -75,14 +65,17 @@ minimax(char board[ROWS][COLUMNS], int depth, bool ismax, char player,
   score = evaluate(board, player);
 
   if (score == 100) {
+    // player has won
     return 100 - depth;
   }
 
   if (score == -100) {
+    // opponent has won
     return -100;
   }
 
   if (score == 0) {
+    // draw
     return 0;
   }
 
@@ -184,6 +177,14 @@ evaluate(char board[ROWS][COLUMNS], char player)
 {
   int blacktiles = 0, whitetiles = 0;
   struct pos *bplayable, *wplayable;
+  int boardWeights[ROWS][COLUMNS] = {{ 20, -5, 5, 3, 3, 5,-5, 20 },
+                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
+                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
+                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
+                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
+                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
+                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
+                                    { 20, -5, 5, 3, 3, 5,-5, 20 }};
 
   bplayable = getplayabletiles(board, 'B');
   wplayable = getplayabletiles(board, 'W');
@@ -191,6 +192,7 @@ evaluate(char board[ROWS][COLUMNS], char player)
   if(bplayable[0].row != -1 && wplayable[0].row != -1) {
     free(bplayable);
     free(wplayable);
+    // TODO: value if game not over
     return -1; // No winner yet
   } else {
     free(bplayable);

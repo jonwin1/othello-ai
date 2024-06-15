@@ -29,16 +29,9 @@ main(void) {
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }};
-  int boardWeights[ROWS][COLUMNS] = {{ 20, -5, 5, 3, 3, 5,-5, 20 },
-                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
-                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
-                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
-                                    {  3,  2, 2, 1, 1, 2, 2,  3 },
-                                    {  5,  1, 3, 2, 2, 3, 1,  5 },
-                                    { -5,-10, 1, 2, 2, 1,-3, -5 },
-                                    { 20, -5, 5, 3, 3, 5,-5, 20 }};
             
   while (true) {
+    // First players turn
     flipedtiles = playerturn(board, 'B');
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");
@@ -55,6 +48,7 @@ main(void) {
     }
     printf("Score: %d / %d\n", blacktiles, whitetiles);
 
+    // Second players turn
     flipedtiles = botturn(board, 'W');
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");

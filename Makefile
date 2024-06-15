@@ -17,7 +17,7 @@
 CC=gcc
 CFLAGS=-g -Wall -Wextra -Wpedantic -Wmissing-declarations -Wmissing-prototypes -Wold-style-definition -pthread
 
-SRC=othello-ai.c
+SRC=othello-ai.c minimax.c board.c
 OBJ=${SRC:.c=.o}
 
 othello-ai: ${OBJ}
