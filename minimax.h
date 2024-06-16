@@ -21,21 +21,28 @@
 #include <memory.h>
 #include "board.h"
 
-#define MAXDEPTH 5
-
 /* Find the best move for the player
  * @param board   The game board
  * @param player  Who is playing ('B' or 'W')
  * @return        The move to make
  */
-struct pos findbestmove(char board[ROWS][COLUMNS], char player);
+struct pos findbestmove(char board[ROWS][COLUMNS], char player, int maxdepth);
 
 /*
  *
  */
-int minimax(char board[ROWS][COLUMNS], int depth, bool ismax, char player,
+int minimax(char board[ROWS][COLUMNS], int maxdepth, bool ismax, char player,
         int alpha, int beta);
 
 /*
  */
 int evaluate(char board[ROWS][COLUMNS], char player);
+
+bool
+isvalidpos(int row, int col);
+
+bool 
+isstable(char board[ROWS][COLUMNS], char player, int row, int col);
+
+int
+calcstability(char board[ROWS][COLUMNS], char player);

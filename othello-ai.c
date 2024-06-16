@@ -32,7 +32,7 @@ main(void) {
             
   while (true) {
     // First players turn
-    flipedtiles = playerturn(board, 'B');
+    flipedtiles = botturn(board, 'B', 20);
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");
       return EXIT_FAILURE;
@@ -49,7 +49,7 @@ main(void) {
     printf("Score: %d / %d\n", blacktiles, whitetiles);
 
     // Second players turn
-    flipedtiles = botturn(board, 'W');
+    flipedtiles = botturn(board, 'W', 15);
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");
       return EXIT_FAILURE;
@@ -129,14 +129,14 @@ playerturn(char board[ROWS][COLUMNS], char player)
 }
 
 int 
-botturn(char board[ROWS][COLUMNS], char player)
+botturn(char board[ROWS][COLUMNS], char player, int maxdepth)
 {
   struct pos bestmove;
 
   printboard(board);
   printf("Player %c, thinking...\n", player);
 
-  bestmove = findbestmove(board, player);
+  bestmove = findbestmove(board, player, maxdepth);
 
   if (bestmove.row == -1)
     return -1;

@@ -33,5 +33,5 @@ int playerturn(char board[ROWS][COLUMNS], char player);
  * @param player  Who is playing ('B' or 'W')
  * @return        Number of tiles fliped or -1 if no possible moves
  */
-int botturn(char board[ROWS][COLUMNS], char player);
+int botturn(char board[ROWS][COLUMNS], char player, int maxdepth);
 
