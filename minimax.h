@@ -21,7 +21,7 @@
 #include <memory.h>
 #include "board.h"
 
-#define MAXDEPTH 20
+#define MAXDEPTH 5
 
 /* Find the best move for the player
  * @param board   The game board
