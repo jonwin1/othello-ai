@@ -29,10 +29,16 @@ main(void) {
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
                               { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }};
+  clock_t t, btime = 0, wtime = 0;
+  int bturns = 0, wturns = 0;
             
   while (true) {
     // First players turn
+    t = clock();
     flipedtiles = botturn(board, 'B', 20);
+    t = clock() - t;
+    btime += t;
+    bturns++;
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");
       return EXIT_FAILURE;
@@ -49,7 +55,11 @@ main(void) {
     printf("Score: %d / %d\n", blacktiles, whitetiles);
 
     // Second players turn
-    flipedtiles = botturn(board, 'W', 15);
+    t = clock();
+    flipedtiles = mtbotturn(board, 'W', 25);
+    t = clock() - t;
+    wtime += t;
+    wturns++;
     if (flipedtiles == 0) {
       fprintf(stderr, "Error: Invalid move placed\n");
       return EXIT_FAILURE;
@@ -74,6 +84,8 @@ main(void) {
     printf("Draw\n");
   }
 
+  printf("black time avrage %f s\n", (((double)btime)/CLOCKS_PER_SEC)/bturns);
+  printf("white time avrage %f s\n", (((double)wtime)/CLOCKS_PER_SEC)/wturns);
   return EXIT_SUCCESS;
 }
 
@@ -147,4 +159,22 @@ botturn(char board[ROWS][COLUMNS], char player, int maxdepth)
   return fliptiles(board, bestmove, player);
 }
 
+int 
+mtbotturn(char board[ROWS][COLUMNS], char player, int maxdepth)
+{
+  struct pos bestmove;
+
+  printboard(board);
+  printf("Player %c, thinking...\n", player);
+
+  bestmove = mtfindbestmove(board, player, maxdepth);
+
+  if (bestmove.row == -1)
+    return -1;
+
+  printf("Playing %d,%d\n", bestmove.row, bestmove.col);
+  board[bestmove.row][bestmove.col] = player;
+
+  return fliptiles(board, bestmove, player);
+}
 

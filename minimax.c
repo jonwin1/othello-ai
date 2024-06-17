@@ -17,6 +17,14 @@
 
 #include "minimax.h"
 
+struct threaddata {
+  char board[ROWS][COLUMNS];
+  struct pos *playable;
+  char player;
+  int maxdepth;
+  int index;
+};
+
 struct pos
 findbestmove(char board[ROWS][COLUMNS], char player, int maxdepth)
 {
@@ -52,6 +60,71 @@ findbestmove(char board[ROWS][COLUMNS], char player, int maxdepth)
 
   free(playable);
   return bestmove;
+}
+
+struct pos
+mtfindbestmove(char board[ROWS][COLUMNS], char player, int maxdepth)
+{
+  int index, bestval = -10000, bufsize = 10;
+  struct pos bestmove = {-1,-1};
+  pthread_t *threads = calloc(bufsize, sizeof(pthread_t));
+  struct pos *playable = getplayabletiles(board, player);
+  
+  if (playable[0].row == -1) {
+    printf("No possible moves, next player\n");
+    free(playable);
+    free(threads);
+    return bestmove;
+  }
+
+  index = 0;
+  while (playable[index].row != -1) {
+    struct threaddata *arg = malloc(sizeof(struct threaddata));
+    memcpy(arg->board, board, sizeof(char)*ROWS*COLUMNS);
+    arg->playable = playable;
+    arg->player = player;
+    arg->maxdepth = maxdepth;
+    arg->index = index;
+
+    if (index >= bufsize) {
+      bufsize += 10;
+      threads = realloc(threads, bufsize * sizeof(pthread_t));
+    }
+
+    pthread_create(&threads[index], NULL, minimaxthread, arg);
+    
+    index++;
+  }
+
+  for (int i = 0; i < index; i++) {
+    void *moveval;
+    pthread_join(threads[i], &moveval);
+    if (*(int *)moveval > bestval) {
+      bestmove.row = playable[i].row;
+      bestmove.col = playable[i].col;
+      bestval = *(int *)moveval;
+    }
+    free(moveval);
+  }
+
+  free(threads);
+  free(playable);
+  return bestmove;
+}
+
+void *
+minimaxthread(void *vargp)
+{
+  int *moveval = malloc(sizeof(int));
+  struct threaddata *arg = vargp;
+
+  arg->board[arg->playable[arg->index].row][arg->playable[arg->index].col] = arg->player;
+  struct pos playedtile = {arg->playable[arg->index].row, arg->playable[arg->index].col};
+  fliptiles((char (*)[COLUMNS])arg->board, playedtile, arg->player);
+
+  *moveval = minimax((char (*)[COLUMNS])arg->board, arg->maxdepth, false, arg->player, -1000, 1000);
+  free(vargp);
+  return moveval;
 }
 
 int 

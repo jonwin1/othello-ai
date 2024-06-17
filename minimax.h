@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <memory.h>
+#include <pthread.h>
 #include "board.h"
 
 /* Find the best move for the player
@@ -27,6 +28,12 @@
  * @return        The move to make
  */
 struct pos findbestmove(char board[ROWS][COLUMNS], char player, int maxdepth);
+
+struct pos
+mtfindbestmove(char board[ROWS][COLUMNS], char player, int maxdepth);
+
+void *
+minimaxthread(void *vargp);
 
 /*
  *

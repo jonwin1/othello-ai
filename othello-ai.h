@@ -35,3 +35,4 @@ int playerturn(char board[ROWS][COLUMNS], char player);
  */
 int botturn(char board[ROWS][COLUMNS], char player, int maxdepth);
 
+int mtbotturn(char board[ROWS][COLUMNS], char player, int maxdepth);
